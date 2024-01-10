@@ -14,7 +14,7 @@ const openai = new OpenAI({
 
 
 const app = express();
-const PORT = 8080;
+const PORT = 8081;
 
 // Middleware
 app.use(bodyParser.json());
@@ -109,6 +109,7 @@ app.get('/api/items', (req, res) => {
 app.post('/formEndpoint', upload.any(), async (req, res) => {
   // Access form data here
   console.log(req.body.buffer); // The files array contains the Blob data
+  res.json(req.body)
   // const buffer = req.files[0].buffer;
   // try {
   //   const modelResponse = await transcribe(buffer);
