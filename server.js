@@ -1,0 +1,183 @@
+var fs = require('fs')
+const express = require('express');
+const bodyParser = require('body-parser');
+const OpenAI = require('openai');
+const cors = require('cors');
+const multer = require('multer');
+require('dotenv').config();
+const upload = multer(); // Initialize multer
+
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY, // defaults to process.env["OPENAI_API_KEY"]
+});
+
+
+const app = express();
+const PORT = 8080;
+
+// Middleware
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: false })); // Add this line for form data
+app.use(cors());
+
+
+// Sample data (for demonstration purposes)
+let data = [
+  { id: 1, name: 'Item 1' },
+  { id: 2, name: 'Item 2' },
+  { id: 3, name: 'Item 3' }
+];
+
+const blobToBuffer = async (blob) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      const buffer = Buffer.from(reader.result);
+      resolve(buffer);
+    };
+
+    reader.onerror = (error) => {
+      reject(error);
+    };
+
+    reader.readAsArrayBuffer(blob);
+  });
+};
+
+// CRUD Endpoints
+async function transcribe(dataBuffer) {	
+	// Change filename to a buffer like <Buffer 52 49 46 ... 3213123 more bytes>
+	const data = dataBuffer;
+	const response = await fetch(
+		"https://api-inference.huggingface.co/models/arijitx/wav2vec2-large-xlsr-bengali",
+		{
+			headers: { Authorization: "Bearer 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" },
+			method: "POST",
+			body: data,
+		}
+	);
+	const result = await response.json();
+	return result;
+}
+
+// transcribe("test.wav").then((response) => {
+// 	console.log(JSON.stringify(response));
+// });
+
+app.get('/checkScam/:buffer', async (req, res) => {
+    try {
+      const modelResponse = await transcribe("scamsample1.wav");
+      const transcription = JSON.stringify(modelResponse);
+      console.log(transcription)
+      
+      const buffer = req.params.buffer;
+      console.log(buffer);
+
+      const completion = await openai.chat.completions.create({
+          messages: [
+              {role: "system", content: "Your name is Feluda AI. You are an excellent detective. You are a Bangladeshi citizen, and your mother tounge is Bengali. You have studied many cases of phone call scams. So if you read the Bengali text of someone, you can judge if they are a scam or not. Whenever you're given a Bengali sentance, you only respond with two words. The first one is always 'Scam'. And the send one is a percentage. It is the percentage of how certain you are that this sentance is a scam or not. Apart from that, if you find gibberish words or sentances that don't make any sense, you say that the percentange is 39%. "},
+              {role: "user", content: transcription}
+              
+          ],
+          model: "gpt-3.5-turbo",
+      });
+      // res.json(completion.choices[0].message.content);
+      res.json({
+        verdict: completion.choices[0].message.content,
+        transcripted: transcription
+      })
+      console.log(completion.choices[0].message.content);
+    } catch(err) {
+        console.log(err)
+        res.json(err)
+    }
+    
+      
+    
+  });
+
+
+
+// Read (GET)
+app.get('/api/items', (req, res) => {
+  res.json(data);
+});
+
+// Handle FormData with multer
+app.post('/formEndpoint', upload.any(), async (req, res) => {
+  // Access form data here
+  console.log(req.body.buffer); // The files array contains the Blob data
+  // const buffer = req.files[0].buffer;
+  // try {
+  //   const modelResponse = await transcribe(buffer);
+
+  //   console.log(modelResponse.text)
+  //   const transcription = JSON.stringify(modelResponse.text);
+  //   // console.log(transcription)
+
+  //   const completion = await openai.chat.completions.create({
+  //       messages: [
+  //           {role: "system", content: "Your name is Feluda AI. You are an excellent detective. You are a Bangladeshi citizen, and your mother tounge is Bengali. You have studied many cases of phone call scams. So if you read the Bengali text of someone, you can judge if they are a scam or not. Whenever you're given a Bengali sentance, you only respond with two words. The first one is always 'Scam'. And the send one is a percentage. It is the percentage of how certain you are that this sentance is a scam or not. Apart from that, if you find gibberish words or sentances that don't make any sense, you say that the percentange is 39%. "},
+  //           {role: "user", content: transcription}            
+  //       ],
+  //       model: "gpt-3.5-turbo",
+  //   });
+  //   // res.json(completion.choices[0].message.content);
+  //   res.json({
+  //     verdict: completion.choices[0].message.content,
+  //     transcripted: modelResponse.text
+  //   })
+  //   console.log(completion.choices[0].message.content);
+  // } catch(err) {
+  //     console.log(err)
+  //     res.json(err)
+  // }
+});
+
+// Read single item (GET)
+app.get('/api/items/:id', (req, res) => {
+  const itemId = parseInt(req.params.id);
+  const item = data.find(item => item.id === itemId);
+
+  if (item) {
+    res.json(item);
+  } else {
+    res.status(404).json({ error: 'Item not found' });
+  }
+});
+
+// Create (POST)
+app.post('/api/items', (req, res) => {
+  const newItem = req.body;
+  newItem.id = data.length + 1;
+  data.push(newItem);
+  res.status(201).json(newItem);
+});
+
+// Update (PUT)
+app.put('/api/items/:id', (req, res) => {
+  const itemId = parseInt(req.params.id);
+  const updatedItem = req.body;
+  const index = data.findIndex(item => item.id === itemId);
+
+  if (index !== -1) {
+    data[index] = { ...data[index], ...updatedItem };
+    res.json(data[index]);
+  } else {
+    res.status(404).json({ error: 'Item not found' });
+  }
+});
+
+// Delete (DELETE)
+app.delete('/api/items/:id', (req, res) => {
+  const itemId = parseInt(req.params.id);
+  data = data.filter(item => item.id !== itemId);
+  res.json({ message: 'Item deleted successfully' });
+});
+
+// Start the server
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
