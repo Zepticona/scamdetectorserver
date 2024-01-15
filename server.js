@@ -5,7 +5,6 @@ const OpenAI = require('openai');
 const cors = require('cors');
 const multer = require('multer');
 require('dotenv').config();
-const upload = multer(); // Initialize multer
 const speech = require('@google-cloud/speech'); // Import the Google Cloud Speech library.
 
 process.env.GOOGLE_APPLICATION_CREDENTIALS = 'scam-detector-408617-214613d9f26e.json'; // Set the path to your Google Cloud service account key.
@@ -15,7 +14,17 @@ const {db} = require('./firebase')
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY, // defaults to process.env["OPENAI_API_KEY"]
 });
-
+const upload = multer({
+  storage: multer.memoryStorage(), // Store files in memory, you can change it based on your needs
+  fileFilter: (req, file, cb) => {
+    // Add file type filtering logic here
+    if (file.mimetype.startsWith('audio/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Invalid file type. Only audio files are allowed.'));
+    }
+  }
+});
 
 const app = express();
 const PORT = 8081;
@@ -109,8 +118,9 @@ app.get('/api/items', (req, res) => {
   res.json(data);
 });
 
+
 // Handle FormData with multer
-app.post('/formEndpoint', upload.any(), async (req, res) => {
+app.post('/sendAudio', upload.any(), async (req, res) => {
   // Access form data here
   // console.log(req.body.buffer); // The files array contains the Blob data
   // const { firstName, lastName } = req.body
@@ -122,7 +132,22 @@ app.post('/formEndpoint', upload.any(), async (req, res) => {
   // })
   // console.log(res2);
   // friends[name] = status
-  res.status(200).send(req.body)
+  console.log(req.body);
+
+  const files = req.files.map(file => ({
+    fieldname: file.fieldname,
+    originalname: file.originalname,
+    encoding: file.encoding,
+    mimetype: file.mimetype,
+    buffer: file.buffer,
+  }));
+
+  const responseData = {
+    body: req.body,
+    files: files,
+  };
+
+  res.status(200).send(responseData);
   //res.json(req.body)
   // const buffer = req.files[0].buffer;
   // try {
