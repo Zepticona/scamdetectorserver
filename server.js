@@ -6,7 +6,11 @@ const cors = require('cors');
 const multer = require('multer');
 require('dotenv').config();
 const upload = multer(); // Initialize multer
+const speech = require('@google-cloud/speech'); // Import the Google Cloud Speech library.
 
+process.env.GOOGLE_APPLICATION_CREDENTIALS = 'scam-detector-408617-214613d9f26e.json'; // Set the path to your Google Cloud service account key.
+
+const {db} = require('./firebase')
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY, // defaults to process.env["OPENAI_API_KEY"]
@@ -108,8 +112,18 @@ app.get('/api/items', (req, res) => {
 // Handle FormData with multer
 app.post('/formEndpoint', upload.any(), async (req, res) => {
   // Access form data here
-  console.log(req.body.buffer); // The files array contains the Blob data
-  res.json(req.body)
+  // console.log(req.body.buffer); // The files array contains the Blob data
+  // const { firstName, lastName } = req.body
+  console.log(req.body);
+  // const peopleRef = db.collection('users').doc('isakil416@gmail.com')
+  // const res2 = await peopleRef.set({
+  //     'firstName': firstName,
+  //     'lastName': lastName
+  // })
+  // console.log(res2);
+  // friends[name] = status
+  res.status(200).send(req.body)
+  //res.json(req.body)
   // const buffer = req.files[0].buffer;
   // try {
   //   const modelResponse = await transcribe(buffer);
@@ -136,6 +150,69 @@ app.post('/formEndpoint', upload.any(), async (req, res) => {
   //     res.json(err)
   // }
 });
+
+// async function transcribeAudio(audioName) {
+//     try {
+//         // Initialize a SpeechClient from the Google Cloud Speech library.
+//         const speechClient = new speech.SpeechClient();
+
+//         // Read the binary audio data from the specified file.
+//         const file = fs.readFileSync(audioName);
+//         const audioBytes = file.toString('base64');
+//         console.log(audioBytes);
+//         // Create an 'audio' object with the audio content in base64 format.
+//         const audio = {
+//             content: audioBytes
+//         };
+
+//         // Define the configuration for audio encoding, sample rate, and language code.
+//         const config = {
+//             encoding: 'LINEAR16',   // Audio encoding (change if needed).
+//             sampleRateHertz: 48000, // Audio sample rate in Hertz (change if needed).
+//             languageCode: 'bn-BD'   // Language code for the audio (change if needed).
+//         };
+
+//         // Return a Promise for the transcription result.
+//         return new Promise((resolve, reject) => {
+//             // Use the SpeechClient to recognize the audio with the specified config.
+//             speechClient.recognize({ audio, config })
+//                 .then(data => {
+//                     resolve(data); // Resolve the Promise with the transcription result.
+//                 })
+//                 .catch(err => {
+//                     reject(err); // Reject the Promise if an error occurs.
+//                 });
+//         });
+//     } catch (error) {
+//         console.error('Error:', error);
+//     }
+// }
+// app.get('/transcribeUsingGoogle', async (req, res) => {
+//   try {
+//     // Call the transcribeAudio function to transcribe 'output.mp3'.
+//     const text = await transcribeAudio('sj2samp1.aac');
+
+//     // Log the entire response object (for debugging purposes).
+  
+
+//     // Extract and log the transcribed text from the response.
+//     console.log(text[0].results.map(r => r.alternatives[0].transcript).join("\n"));
+//     res.send(text[0].results.map(r => r.alternatives[0].transcript).join("\n"))
+//   }catch(err) {
+//     res.send(err);
+//   }
+
+// })
+// (async () => {
+//     // Call the transcribeAudio function to transcribe 'output.mp3'.
+//     const text = await transcribeAudio('output.mp3');
+
+//     // Log the entire response object (for debugging purposes).
+//     console.log(text);
+
+//     // Extract and log the transcribed text from the response.
+//     console.log(text[0].results.map(r => r.alternatives[0].transcript).join("\n"));
+// })();
 
 // Read single item (GET)
 app.get('/api/items/:id', (req, res) => {

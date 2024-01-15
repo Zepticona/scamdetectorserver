@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "scam-detector-app",
+  "private_key_id": "cb27f6c83ae6c59d7a94f82847820ed93a3c5cb3",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDUgHpvepElO0/d\nDhn+hY+jqRW0mCl4wAI2eNMaUvtu95GfRNs7WB3NmC2SLl5T4CjJtYzmUIgGgb4X\n4bkBsre2ZgT/4cOUKZzMa2GXeE+x9atyVWt00biri3aQSkEoM3AY15BQxFBBkrT2\nLczIIxrZV5JN4OGcrz95qLpKwORbfjotQZPRW1bFNAIAitjLjiSblTUqVORsAfRr\nz/hnVX/j1q64Deg5gv+tgFEXStQH0bzY0IA6AyYGko8bySe8v0VG5Xqztk+0JFGU\nJfk5zXfj/+jPWqtOMFAxRKfbTOYNXYiV0E9uoUXy4PI39zs9WAcw9fHjIuxFgmkZ\nORc7njv9AgMBAAECggEAU4s9V3Wa+cXDRLemDZQp4CB6KZmG+HOYixzedeN4+Wv4\nguLZxA+FDA7Pn8B+EkC3GHI5dlTj3ZcFirMR/rJqGpoqTgVO1IG1pQJ0iE3jGyZo\nJJejmvZWwY6fauPekPUEFaguEyrTGKyaW4yvDWILzLXqjZajbGvTqztkHj6OqM8U\nKLS2hqmY4KyYr39sQ/+32frnHR0guq3N97O+isPZIrgIJYAEIlXSsvlWFcOpExvV\nY2P7OGYRXKmwnoqDPQmBxPJW9ZUP+8OjUidMjHA1JXOQy7vtv7AUGCAk8hKAbuDZ\nq9ScL0lgTP5zlByEN/XYGio6FxqnfB8KWCjGbOkI+wKBgQD6dKONuiz7oT1R2fUt\ndtBusOU2xR2FlHL9TzSs6YS/6QCTLtfETw0etu9YOb3LbxprXjwM9XrWaK5lapvZ\nhlXT7XHsZhIrdHFwlLhRQymzzfNCRlEgoV6JBk+0EsavYl+eVwW8S7m7HvbJRGP5\niKtSmFnIsYoIrnZxFAjALYY69wKBgQDZNMBFI6Jj9fOLeM6X94x3KRThbW+MgjwW\n75m3t3qO4a6rO1A+xMyjNZu/M8Qee3xovb84/uE/mRd+QhGmyNFkhxwxDUq+bwvj\nOvyzB47KbG8P1OJ6uh1+5Jv3gxQpK+A04sxX2cRE+wtQnUrFn4fbqJQXLUmir9YT\n27nGlQqvqwKBgQCrRqy6tYEhq8iVeypyJvivWgXGiNKBkV154XqybRe9bghYnwYr\nV6wvPwc7HHGw94/nsQ/8BLw2eGwbKubdwUJcpdrswXjXgtA5H1tVJ0sTjVo4DoJY\ngEJ4DnrfOJ/rPKkLTZO8i0S+tJQsW7rK4S3YVBvCZbdx7G1PM1YwpnFPTQKBgCGh\nND/AM61scEfg7YPD9UCh4LTCf+nuZCVc9ZznUJd8w9GJPnRpfhGrBDFHb48UqX+C\nGXBWrkNtjaCj1B3Rq/H3pVrG5xKzGNEW2fdSLT6UKWH3IRXFaTmzZZ6d8eop++3U\nS7UyZ1wSzn6ty9zrRVqyMDOidGs29FtgwtPHUb8/AoGACinbuI04KNH1sfcWTm2q\nOICTBZVdmi0nqn1eRf5ExMu9rltUNG3/aoaIPougZWx1OW7WNDtvAKsJ5Maj11N3\nhcZu8EDaVI0dHpYH6hlSR9xcsMNSA/3BnW55qNiE5XyKlX3g4FGjQFVV1a+IS7Mn\nbWRy05Nj27JwUtQvn6nacZQ=\n-----END PRIVATE KEY-----\n",
+  "client_email": "firebase-adminsdk-uj4ry@scam-detector-app.iam.gserviceaccount.com",
+  "client_id": "112960384776145721657",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-uj4ry%40scam-detector-app.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
