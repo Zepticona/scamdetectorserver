@@ -1,15 +1,19 @@
-var fs = require('fs')
-const express = require('express');
-const bodyParser = require('body-parser');
-const OpenAI = require('openai');
-const cors = require('cors');
-const multer = require('multer');
-require('dotenv').config();
-const speech = require('@google-cloud/speech'); // Import the Google Cloud Speech library.
+import fs from "fs"
+import express from "express"
+import bodyParser from "body-parser"
+import OpenAI from "openai"
+import cors from "cors"
+import multer from "multer"
+import dotenv from "dotenv"
+dotenv.config()
+// const speech = require('@google-cloud/speech'); // Import the Google Cloud Speech library.
+import speech from "@google-cloud/speech"
 
 process.env.GOOGLE_APPLICATION_CREDENTIALS = 'scam-detector-408617-214613d9f26e.json'; // Set the path to your Google Cloud service account key.
 
-const {db} = require('./firebase')
+// const {db} = require('./firebase')
+import {db, storage, ref, uploadBytes} from "./firebase.js"
+
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY, // defaults to process.env["OPENAI_API_KEY"]
@@ -105,9 +109,7 @@ app.get('/checkScam/:buffer', async (req, res) => {
     } catch(err) {
         console.log(err)
         res.json(err)
-    }
-    
-      
+    }    
     
   });
 
@@ -125,15 +127,8 @@ app.post('/sendAudio', upload.any(), async (req, res) => {
   // console.log(req.body.buffer); // The files array contains the Blob data
   // const { firstName, lastName } = req.body
   console.log(req.body);
-  // const peopleRef = db.collection('users').doc('isakil416@gmail.com')
-  // const res2 = await peopleRef.set({
-  //     'firstName': firstName,
-  //     'lastName': lastName
-  // })
-  // console.log(res2);
-  // friends[name] = status
-  console.log(req.body);
-
+  // const buffer = req.files[0].buffer ? 'Audio buffer not found' : req.body.buffer
+  
   const files = req.files.map(file => ({
     fieldname: file.fieldname,
     originalname: file.originalname,
@@ -141,39 +136,58 @@ app.post('/sendAudio', upload.any(), async (req, res) => {
     mimetype: file.mimetype,
     buffer: file.buffer,
   }));
+  
 
   const responseData = {
     body: req.body,
     files: files,
   };
 
-  res.status(200).send(responseData);
+  const recordingsRef = ref(storage, "recordings")
+  
+
+  // const audioRef = ref(storage, `recordings/${req.files[0].originalname}`);
+
+
+  const metadata = {
+    contentType: req.files[0].mimetype,
+    encoding: req.files[0].encoding,
+    fieldname: req.files[0].fieldname
+  };
+  // const snapshot = await uploadBytes(audioRef, files, metadata)
+  // console.log('Uplaoded to firebase!')
+
+  // const peopleRef = db.collection('users').doc('isakil416@gmail.com')
+  // const res2 = await peopleRef.set(files);
+  
+
+  //res.status(200).send(responseData);
   //res.json(req.body)
-  // const buffer = req.files[0].buffer;
-  // try {
-  //   const modelResponse = await transcribe(buffer);
+  const buffer = files[0].buffer;
+  try {
+    const modelResponse = await transcribe(buffer);
 
-  //   console.log(modelResponse.text)
-  //   const transcription = JSON.stringify(modelResponse.text);
-  //   // console.log(transcription)
+    console.log(modelResponse.text)
+    const transcription = JSON.stringify(modelResponse.text);
+    console.log(transcription)
 
-  //   const completion = await openai.chat.completions.create({
-  //       messages: [
-  //           {role: "system", content: "Your name is Feluda AI. You are an excellent detective. You are a Bangladeshi citizen, and your mother tounge is Bengali. You have studied many cases of phone call scams. So if you read the Bengali text of someone, you can judge if they are a scam or not. Whenever you're given a Bengali sentance, you only respond with two words. The first one is always 'Scam'. And the send one is a percentage. It is the percentage of how certain you are that this sentance is a scam or not. Apart from that, if you find gibberish words or sentances that don't make any sense, you say that the percentange is 39%. "},
-  //           {role: "user", content: transcription}            
-  //       ],
-  //       model: "gpt-3.5-turbo",
-  //   });
-  //   // res.json(completion.choices[0].message.content);
-  //   res.json({
-  //     verdict: completion.choices[0].message.content,
-  //     transcripted: modelResponse.text
-  //   })
-  //   console.log(completion.choices[0].message.content);
-  // } catch(err) {
-  //     console.log(err)
-  //     res.json(err)
-  // }
+    const completion = await openai.chat.completions.create({
+        messages: [
+            {role: "system", content: "Your name is Feluda AI. You are an excellent detective. You are a Bangladeshi citizen, and your mother tounge is Bengali. You have studied many cases of phone call scams. So if you read the Bengali text of someone, you can judge if they are a scam or not. Whenever you're given a Bengali sentance, you only respond with two words. The first one is always 'Scam'. And the send one is a percentage. It is the percentage of how certain you are that this sentance is a scam or not. Apart from that, if you find gibberish words or sentances that don't make any sense, you say that the percentange is 39%. "},
+            {role: "user", content: transcription}            
+        ],
+        model: "gpt-3.5-turbo",
+    });
+    // res.json(completion.choices[0].message.content);
+    res.json({
+      verdict: completion.choices[0].message.content,
+      transcripted: modelResponse.text
+    })
+    console.log(completion.choices[0].message.content);
+  } catch(err) {
+      console.log(err)
+      res.json(err)
+  }
 });
 
 // async function transcribeAudio(audioName) {
