@@ -133,21 +133,21 @@ app.post('/sendAudio', upload.any(), async (req, res) => {
       
       // const buffer = req.files[0].buffer ? 'Audio buffer not found' : req.body.buffer
       const file = req.files[0].buffer;
-      const modelResponse = await transcribe(file);
-      const transcription = JSON.stringify(modelResponse);
+      // const modelResponse = await transcribe(file);
+      // const transcription = JSON.stringify(modelResponse);
       
-      // const audioBytes = file.toString('base64');
+      const audioBytes = file.toString('base64');
       
-      // const audio = {
-      //     content: audioBytes
-      // };
-      // const config = {
-      //   // encoding: 'LINEAR16',   // Audio encoding (change if needed).
-      //   sampleRateHertz: 48000, // Audio sample rate in Hertz (change if needed).
-      //   languageCode: 'bn-BD'   // Language code for the audio (change if needed).
-      // };
-      // const data = await speechClient.recognize({audio, config})
-      // const transcription = data[0].results.map(r => r.alternatives[0].transcript).join("\n");
+      const audio = {
+          content: audioBytes
+      };
+      const config = {
+        // encoding: 'LINEAR16',   // Audio encoding (change if needed).
+        sampleRateHertz: 48000, // Audio sample rate in Hertz (change if needed).
+        languageCode: 'bn-BD'   // Language code for the audio (change if needed).
+      };
+      const data = await speechClient.recognize({audio, config})
+      const transcription = data[0].results.map(r => r.alternatives[0].transcript).join("\n");
       console.log(transcription);
 
       const completion = await openai.chat.completions.create({
