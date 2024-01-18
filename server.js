@@ -125,7 +125,7 @@ app.get('/api/items', (req, res) => {
 app.post('/sendAudio', upload.any(), async (req, res) => {
   try {
       console.log(req.body.userEmail);
-      // const speechClient = new speech.SpeechClient();
+      const speechClient = new speech.SpeechClient();
 
       // Access form data here
       // console.log(req.body.buffer); // The files array contains the Blob data
