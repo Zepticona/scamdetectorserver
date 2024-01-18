@@ -12,7 +12,7 @@ import speech from "@google-cloud/speech"
 process.env.GOOGLE_APPLICATION_CREDENTIALS = 'scam-detector-408617-214613d9f26e.json'; // Set the path to your Google Cloud service account key.
 
 // const {db} = require('./firebase')
-import {db, storage, ref, uploadBytes} from "./firebase.js"
+import {db, storage, ref, uploadBytes, doc, setDoc} from "./firebase.js"
 
 
 const openai = new OpenAI({
@@ -123,74 +123,121 @@ app.get('/api/items', (req, res) => {
 
 // Handle FormData with multer
 app.post('/sendAudio', upload.any(), async (req, res) => {
-  // Access form data here
-  // console.log(req.body.buffer); // The files array contains the Blob data
-  // const { firstName, lastName } = req.body
-  console.log(req.body);
-  // const buffer = req.files[0].buffer ? 'Audio buffer not found' : req.body.buffer
-  
-  const files = req.files.map(file => ({
-    fieldname: file.fieldname,
-    originalname: file.originalname,
-    encoding: file.encoding,
-    mimetype: file.mimetype,
-    buffer: file.buffer,
-  }));
-  
-
-  const responseData = {
-    body: req.body,
-    files: files,
-  };
-
-  const recordingsRef = ref(storage, "recordings")
-  
-
-  // const audioRef = ref(storage, `recordings/${req.files[0].originalname}`);
-
-
-  const metadata = {
-    contentType: req.files[0].mimetype,
-    encoding: req.files[0].encoding,
-    fieldname: req.files[0].fieldname
-  };
-  // const snapshot = await uploadBytes(audioRef, files, metadata)
-  // console.log('Uplaoded to firebase!')
-
-  // const peopleRef = db.collection('users').doc('isakil416@gmail.com')
-  // const res2 = await peopleRef.set(files);
-  
-
-  //res.status(200).send(responseData);
-  //res.json(req.body)
-  const buffer = files[0].buffer;
   try {
-    const modelResponse = await transcribe(buffer);
+      console.log(req.body.userEmail);
+      // const speechClient = new speech.SpeechClient();
 
-    console.log(modelResponse.text)
-    const transcription = JSON.stringify(modelResponse.text);
-    console.log(transcription)
+      // Access form data here
+      // console.log(req.body.buffer); // The files array contains the Blob data
+      // const { firstName, lastName } = req.body
+      
+      // const buffer = req.files[0].buffer ? 'Audio buffer not found' : req.body.buffer
+      const file = req.files[0].buffer;
+      const modelResponse = await transcribe(file);
+      const transcription = JSON.stringify(modelResponse);
+      
+      // const audioBytes = file.toString('base64');
+      
+      // const audio = {
+      //     content: audioBytes
+      // };
+      // const config = {
+      //   // encoding: 'LINEAR16',   // Audio encoding (change if needed).
+      //   sampleRateHertz: 48000, // Audio sample rate in Hertz (change if needed).
+      //   languageCode: 'bn-BD'   // Language code for the audio (change if needed).
+      // };
+      // const data = await speechClient.recognize({audio, config})
+      // const transcription = data[0].results.map(r => r.alternatives[0].transcript).join("\n");
+      console.log(transcription);
 
-    const completion = await openai.chat.completions.create({
+      const completion = await openai.chat.completions.create({
         messages: [
-            {role: "system", content: "Your name is Feluda AI. You are an excellent detective. You are a Bangladeshi citizen, and your mother tounge is Bengali. You have studied many cases of phone call scams. So if you read the Bengali text of someone, you can judge if they are a scam or not. Whenever you're given a Bengali sentance, you only respond with two words. The first one is always 'Scam'. And the send one is a percentage. It is the percentage of how certain you are that this sentance is a scam or not. Apart from that, if you find gibberish words or sentances that don't make any sense, you say that the percentange is 39%. "},
+            {role: "system", content: "Your name is Feluda AI. You are an excellent detective. You are a Bangladeshi citizen, and your mother tounge is Bengali. You have studied many cases of phone call scams. So if you read the Bengali text of someone, you can judge if they are a scam or not. Whenever you're given a Bengali sentance, you only respond with two words. The first one is always 'Scam'. And the send one is a percentage. It is the percentage of how certain you are that this sentance is a scam or not. Apart from that, if you find gibberish words or sentances that don't make any sense, you say that the percentange is 00%. "},
             {role: "user", content: transcription}            
         ],
         model: "gpt-3.5-turbo",
     });
-    // res.json(completion.choices[0].message.content);
+
+
+    // const recordingNumber = `recording${1}`
+    // const userRef = doc(db, 'users', 'isakil416@gmail.com')
+
+    // const dbData = await setDoc(userRef, { recordingNumber: {transcriptedText: 'Eita transcription', verdict: 'Scam. 99%'} }, { merge: true })
+    // const peopleRef = db.collection('users').doc('isakil416@gmail.com')
+    
+
     res.json({
       verdict: completion.choices[0].message.content,
-      transcripted: modelResponse.text
+      transcripted: transcription,
+      userEmail: req.body.userEmail
     })
-    console.log(completion.choices[0].message.content);
   } catch(err) {
-      console.log(err)
-      res.json(err)
+    console.log(err);
+    res.send(err);
   }
+
+  // const files = req.files.map(file => ({
+  //   fieldname: file.fieldname,
+  //   originalname: file.originalname,
+  //   encoding: file.encoding,
+  //   mimetype: file.mimetype,
+  //   buffer: file.buffer,
+  // }));
+  
+
+  // const responseData = {
+  //   body: req.body,
+  //   files: files,
+  // };
+
+  // const recordingsRef = ref(storage, "recordings")
+  
+
+  // // const audioRef = ref(storage, `recordings/${req.files[0].originalname}`);
+
+
+  // const metadata = {
+  //   contentType: req.files[0].mimetype,
+  //   encoding: req.files[0].encoding,
+  //   fieldname: req.files[0].fieldname
+  // };
+  // // const snapshot = await uploadBytes(audioRef, files, metadata)
+  // // console.log('Uplaoded to firebase!')
+
+  // // const peopleRef = db.collection('users').doc('isakil416@gmail.com')
+  // // const res2 = await peopleRef.set(files);
+  
+
+  // //res.status(200).send(responseData);
+  // //res.json(req.body)
+  // const buffer = files[0].buffer;
+  // try {
+  //   const modelResponse = await transcribe(buffer);
+
+  //   console.log(modelResponse.text)
+  //   const transcription = JSON.stringify(modelResponse.text);
+  //   console.log(transcription)
+
+  //   const completion = await openai.chat.completions.create({
+  //       messages: [
+  //           {role: "system", content: "Your name is Feluda AI. You are an excellent detective. You are a Bangladeshi citizen, and your mother tounge is Bengali. You have studied many cases of phone call scams. So if you read the Bengali text of someone, you can judge if they are a scam or not. Whenever you're given a Bengali sentance, you only respond with two words. The first one is always 'Scam'. And the send one is a percentage. It is the percentage of how certain you are that this sentance is a scam or not. Apart from that, if you find gibberish words or sentances that don't make any sense, you say that the percentange is 00%. "},
+  //           {role: "user", content: transcription}            
+  //       ],
+  //       model: "gpt-3.5-turbo",
+  //   });
+  //   // res.json(completion.choices[0].message.content);
+  //   res.json({
+  //     verdict: completion.choices[0].message.content,
+  //     transcripted: modelResponse.text
+  //   })
+  //   console.log(completion.choices[0].message.content);
+  // } catch(err) {
+  //     console.log(err)
+  //     res.json(err)
+  // }
 });
 
-// async function transcribeAudio(audioName) {
+// async function useGoogleSpeechToText(audioName) {
 //     try {
 //         // Initialize a SpeechClient from the Google Cloud Speech library.
 //         const speechClient = new speech.SpeechClient();
@@ -198,20 +245,20 @@ app.post('/sendAudio', upload.any(), async (req, res) => {
 //         // Read the binary audio data from the specified file.
 //         const file = fs.readFileSync(audioName);
 //         const audioBytes = file.toString('base64');
-//         console.log(audioBytes);
+//         console.log(file);
 //         // Create an 'audio' object with the audio content in base64 format.
 //         const audio = {
 //             content: audioBytes
 //         };
 
-//         // Define the configuration for audio encoding, sample rate, and language code.
+//         // // Define the configuration for audio encoding, sample rate, and language code.
 //         const config = {
 //             encoding: 'LINEAR16',   // Audio encoding (change if needed).
 //             sampleRateHertz: 48000, // Audio sample rate in Hertz (change if needed).
 //             languageCode: 'bn-BD'   // Language code for the audio (change if needed).
 //         };
 
-//         // Return a Promise for the transcription result.
+//         // // Return a Promise for the transcription result.
 //         return new Promise((resolve, reject) => {
 //             // Use the SpeechClient to recognize the audio with the specified config.
 //             speechClient.recognize({ audio, config })
@@ -229,22 +276,22 @@ app.post('/sendAudio', upload.any(), async (req, res) => {
 // app.get('/transcribeUsingGoogle', async (req, res) => {
 //   try {
 //     // Call the transcribeAudio function to transcribe 'output.mp3'.
-//     const text = await transcribeAudio('sj2samp1.aac');
+//     const text = await useGoogleSpeechToText('sj2samp1.aac');
 
 //     // Log the entire response object (for debugging purposes).
   
 
+//     res.send('success')
 //     // Extract and log the transcribed text from the response.
 //     console.log(text[0].results.map(r => r.alternatives[0].transcript).join("\n"));
 //     res.send(text[0].results.map(r => r.alternatives[0].transcript).join("\n"))
 //   }catch(err) {
 //     res.send(err);
 //   }
-
 // })
 // (async () => {
 //     // Call the transcribeAudio function to transcribe 'output.mp3'.
-//     const text = await transcribeAudio('output.mp3');
+//     const text = await useGoogleSpeechToText('output.mp3');
 
 //     // Log the entire response object (for debugging purposes).
 //     console.log(text);

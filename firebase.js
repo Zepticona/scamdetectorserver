@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
+import { getFirestore, doc, setDoc } from "firebase/firestore";
 import { getStorage, ref, uploadBytes } from "firebase/storage";
 
 // TODO: Replace the following with your app's Firebase project configuration
@@ -26,5 +26,5 @@ const db = getFirestore(app)
 const storage = getStorage(app)
 
 
-export {db, storage, ref, uploadBytes}
+export {db, storage, ref, uploadBytes, doc, setDoc}
 
