@@ -6,7 +6,6 @@ import cors from "cors"
 import multer from "multer"
 import dotenv from "dotenv"
 import { WavRecorder, getWaveBlob, downloadWav } from "webm-to-wav-converter"
-import * as FFmpeg from '@ffmpeg/ffmpeg';
 dotenv.config()
 // const speech = require('@google-cloud/speech'); // Import the Google Cloud Speech library.
 import speech from "@google-cloud/speech"
