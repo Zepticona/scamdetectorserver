@@ -14,7 +14,6 @@ import { v1p1beta1 as speech } from '@google-cloud/speech';
 
 // Now you can use the 'speech' object in your code.
 
-
 process.env.GOOGLE_APPLICATION_CREDENTIALS = 'scam-detector-408617-214613d9f26e.json'; // Set the path to your Google Cloud service account key.
 
 // const {db} = require('./firebase')
@@ -195,29 +194,36 @@ app.post('/sendAudio', upload.any(), async (req, res) => {
       
       const completion = await openai.chat.completions.create({
         messages: [
-            {role: "system", content: "Your name is Feluda AI. You  are an excellent detective. You have studied many cases of phone call scams. So if you read the text of two people conversing, you can judge if there is scam involved or not. Whenever you're given a transcription, you only respond with two words. The first one is always 'Scam'. And the send one is a percentage. It is the percentage of how certain you are that this sentance is a scam or not. Apart from that, if you find gibberish words or sentances that don't make any sense, you say that the percentange is 00%. "},
+            {role: "system", content: "Your name is Feluda AI. You  are an excellent detective. You have studied many cases of phone call scams. So if you read the text of two people conversing, you can judge if there is scam involved or not. Whenever you're given a transcription, you only respond with two '--' separated words. The first one is always 'Scam'. And the second one is a percentage. It is the percentage of how certain you are that this sentance is a scam or not. Apart from that, if you find gibberish words or sentances that don't make any sense, you say that the percentange is 00%. Moreover, if you see someone asking for password or pin code, then you flag them as scam with 100% percentage."},
             {role: "user", content: transcription}            
         ],
         model: "gpt-3.5-turbo",
     });
 
-    // const transcription = await openai.audio.transcriptions.create({
-    //   file: req.files[0],
-    //   model:"whisper-1"
-    // })
+    const verdict =  completion.choices[0].message.content
+    
+
 
     // const recordingNumber = `recording${1}`
     // const userRef = doc(db, 'users', 'isakil416@gmail.com')
 
     // const dbData = await setDoc(userRef, { recordingNumber: {transcriptedText: 'Eita transcription', verdict: 'Scam. 99%'} }, { merge: true })
     // const peopleRef = db.collection('users').doc('isakil416@gmail.com')
-    
+    // Scam -- 95%
 
+    const match = verdict.match(/\d+/);
+
+    if (parseInt(match[0])>=90) {
+      console.log('More than 90%');
+      
+    } else {
+      console.log("No number found in the string");
+    }
     
 
     res.json({
       transcriptionAssemblyAI: transcription,
-      verdict: completion.choices[0].message.content,
+      verdict: verdict,
       // transcriptionGoogle: transcriptionGoogle,
       // transcriptionHuggingface: transcriptionHuggingface,
       userEmail: req.body.userEmail
