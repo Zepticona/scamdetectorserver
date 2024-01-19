@@ -5,6 +5,8 @@ import OpenAI from "openai"
 import cors from "cors"
 import multer from "multer"
 import dotenv from "dotenv"
+import { WavRecorder, getWaveBlob, downloadWav } from "webm-to-wav-converter"
+import * as FFmpeg from '@ffmpeg/ffmpeg';
 dotenv.config()
 // const speech = require('@google-cloud/speech'); // Import the Google Cloud Speech library.
 import speech from "@google-cloud/speech"
@@ -19,16 +21,19 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY, // defaults to process.env["OPENAI_API_KEY"]
 });
 const upload = multer({
-  storage: multer.memoryStorage(), // Store files in memory, you can change it based on your needs
+  storage: multer.memoryStorage(),
   fileFilter: (req, file, cb) => {
     // Add file type filtering logic here
-    if (file.mimetype.startsWith('audio/')) {
+    const allowedMimeTypes = ['audio/*', 'video/webm'];
+
+    if (allowedMimeTypes.some(type => file.mimetype.startsWith(type))) {
       cb(null, true);
     } else {
-      cb(new Error('Invalid file type. Only audio files are allowed.'));
+      cb(new Error('Invalid file type. Only audio and webm files are allowed.'));
     }
   }
 });
+
 
 const app = express();
 const PORT = 8081;
@@ -45,6 +50,23 @@ let data = [
   { id: 2, name: 'Item 2' },
   { id: 3, name: 'Item 3' }
 ];
+
+async function convertWebmToMp3() {
+  const ffmpeg = createFFmpeg({ log: false });
+  await ffmpeg.load();
+
+  const inputName = 'input.webm';
+  const outputName = 'output.mp3';
+
+  ffmpeg.FS('writeFile', inputName, await fetch(webmBlob).then((res) => res.arrayBuffer()));
+
+  await ffmpeg.run('-i', inputName, outputName);
+
+  const outputData = ffmpeg.FS('readFile', outputName);
+  const outputBlob = new Blob([outputData.buffer], { type: 'audio/mp3' });
+
+  return outputBlob;
+}
 
 const blobToBuffer = async (blob) => {
   return new Promise((resolve, reject) => {
@@ -126,38 +148,53 @@ app.post('/sendAudio', upload.any(), async (req, res) => {
   try {
       console.log(req.body.userEmail);
       const speechClient = new speech.SpeechClient();
-
+      
       // Access form data here
       // console.log(req.body.buffer); // The files array contains the Blob data
       // const { firstName, lastName } = req.body
       
       // const buffer = req.files[0].buffer ? 'Audio buffer not found' : req.body.buffer
       const file = req.files[0].buffer;
-      // const modelResponse = await transcribe(file);
-      // const transcription = JSON.stringify(modelResponse);
+      const modelResponse = await transcribe(file);
+      const transcriptionHuggingface = JSON.stringify(modelResponse);
+      // const blob = new Blob([file]); // JavaScript Blob
+
+      const files = req.files.map(file => ({
+        fieldname: file.fieldname,
+        originalname: file.originalname,
+        encoding: file.encoding,
+        mimetype: file.mimetype,
+        buffer: file.buffer,
+      }));
+      console.log(files);
+
       
       const audioBytes = file.toString('base64');
-      
+      // downloadWav(audioBytes, false)
       const audio = {
-          content: audioBytes
+        content: audioBytes
       };
       const config = {
-        // encoding: 'LINEAR16',   // Audio encoding (change if needed).
+        encoding: 'WEBM_OPUS',   // Audio encoding (change if needed). FLAC/LINEAR16/AMR_WB
         sampleRateHertz: 48000, // Audio sample rate in Hertz (change if needed).
-        languageCode: 'bn-BD'   // Language code for the audio (change if needed).
+        languageCode: 'bn-BD',   // Language code for the audio (change if needed).
       };
       const data = await speechClient.recognize({audio, config})
-      const transcription = data[0].results.map(r => r.alternatives[0].transcript).join("\n");
-      console.log(transcription);
+      const transcriptionGoogle = data[0].results.map(r => r.alternatives[0].transcript).join("\n");
+      
 
-      const completion = await openai.chat.completions.create({
-        messages: [
-            {role: "system", content: "Your name is Feluda AI. You are an excellent detective. You are a Bangladeshi citizen, and your mother tounge is Bengali. You have studied many cases of phone call scams. So if you read the Bengali text of someone, you can judge if they are a scam or not. Whenever you're given a Bengali sentance, you only respond with two words. The first one is always 'Scam'. And the send one is a percentage. It is the percentage of how certain you are that this sentance is a scam or not. Apart from that, if you find gibberish words or sentances that don't make any sense, you say that the percentange is 00%. "},
-            {role: "user", content: transcription}            
-        ],
-        model: "gpt-3.5-turbo",
-    });
+    //   const completion = await openai.chat.completions.create({
+    //     messages: [
+    //         {role: "system", content: "Your name is Feluda AI. You  are an excellent detective. You are a Bangladeshi citizen, and your mother tounge is Bengali. You have studied many cases of phone call scams. So if you read the Bengali text of someone, you can judge if they are a scam or not. Whenever you're given a Bengali sentance, you only respond with two words. The first one is always 'Scam'. And the send one is a percentage. It is the percentage of how certain you are that this sentance is a scam or not. Apart from that, if you find gibberish words or sentances that don't make any sense, you say that the percentange is 00%. "},
+    //         {role: "user", content: transcription}            
+    //     ],
+    //     model: "gpt-3.5-turbo",
+    // });
 
+    // const transcription = await openai.audio.transcriptions.create({
+    //   file: req.files[0],
+    //   model:"whisper-1"
+    // })
 
     // const recordingNumber = `recording${1}`
     // const userRef = doc(db, 'users', 'isakil416@gmail.com')
@@ -166,23 +203,20 @@ app.post('/sendAudio', upload.any(), async (req, res) => {
     // const peopleRef = db.collection('users').doc('isakil416@gmail.com')
     
 
+    
+
     res.json({
-      verdict: completion.choices[0].message.content,
-      transcripted: transcription,
+      // verdict: completion.choices[0].message.content,
+      transcriptionGoogle: transcriptionGoogle,
+      transcriptionHuggingface: transcriptionHuggingface,
       userEmail: req.body.userEmail
+      // rawTrans: data
     })
   } catch(err) {
     console.log(err);
     res.send(err);
   }
 
-  // const files = req.files.map(file => ({
-  //   fieldname: file.fieldname,
-  //   originalname: file.originalname,
-  //   encoding: file.encoding,
-  //   mimetype: file.mimetype,
-  //   buffer: file.buffer,
-  // }));
   
 
   // const responseData = {
