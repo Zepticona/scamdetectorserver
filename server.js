@@ -20,19 +20,16 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY, // defaults to process.env["OPENAI_API_KEY"]
 });
 const upload = multer({
-  storage: multer.memoryStorage(),
+  storage: multer.memoryStorage(), // Store files in memory, you can change it based on your needs
   fileFilter: (req, file, cb) => {
-    // Add file type filtering logic here
-    const allowedMimeTypes = ['audio/*', 'video/webm'];
-
-    if (allowedMimeTypes.some(type => file.mimetype.startsWith(type))) {
+    //Add file type filtering logic here
+    if (file.mimetype.startsWith('audio/')) {
       cb(null, true);
     } else {
-      cb(new Error('Invalid file type. Only audio and webm files are allowed.'));
+      cb(new Error('Invalid file type. Only audio files are allowed.'));
     }
   }
 });
-
 
 const app = express();
 const PORT = 8081;
