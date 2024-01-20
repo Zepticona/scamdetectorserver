@@ -7,6 +7,9 @@ import multer from "multer"
 import dotenv from "dotenv"
 import { WavRecorder, getWaveBlob, downloadWav } from "webm-to-wav-converter"
 import { AssemblyAI } from 'assemblyai'
+
+// const TwilioClient = require('twilio') (accountSid, authToken) ;
+import TwilioClient from "twilio";
 dotenv.config()
 // const speech = require('@google-cloud/speech'); // Import the Google Cloud Speech library.
 // import speech from "@google-cloud/speech"
@@ -16,8 +19,10 @@ import { v1p1beta1 as speech } from '@google-cloud/speech';
 
 process.env.GOOGLE_APPLICATION_CREDENTIALS = 'scam-detector-408617-214613d9f26e.json'; // Set the path to your Google Cloud service account key.
 
+const accountSid = process.env.TWILIO_ACCOUNT_SID;
+const authToken = process.env.TWILIO_AUTH_TOKEN;
 // const {db} = require('./firebase')
-import {db, storage, ref, uploadBytes, doc, setDoc} from "./firebase.js"
+import {db, storage, ref, uploadBytes, doc, setDoc, collection, addDoc, updateDoc, arrayUnion} from "./firebase.js"
 const client = new AssemblyAI({
   apiKey: "4aec259f2f18450d9e45f770b55e699d"
 })
@@ -212,21 +217,64 @@ app.post('/sendAudio', upload.any(), async (req, res) => {
     // Scam -- 95%
 
     const match = verdict.match(/\d+/);
-
+    let message="";
     if (parseInt(match[0])>=90) {
-      console.log('More than 90%');
+
+      const userRef = doc(db, 'users', req.body.userEmail);
+
+      // const tClient = TwilioClient(accountSid, authToken);
       
+      // let msgOptions = {
+      //   from: process.env.TWILIO_FROM_NUMBER,
+      //   to: process.env.TO_NUMBER,
+      //   body: `Your safe contact is getting scammed. Please check website.`
+      // }
+      // message = await tClient.messages.create(msgOptions);
+      // console.log(message);
+
+      // Atomically add a new region to the "regions" array field.
+      await updateDoc(userRef, {
+          regions: arrayUnion({
+            Transcription: transcription,
+            Verdict: verdict,
+            user : req.body.userEmail,
+            message: message
+          })
+      });
+
+      // userRef.set(
+      //   { responses: firebase.firestore.FieldValue.arrayUnion({
+      //     Transcription: transcription,
+      //     Verdict: verdict,
+      //     user : req.body.userEmail
+      //   }) },
+      //   { merge: true }
+      // );
+      // const dbData = await setDoc(userRef, 
+      // {
+      //   Transcription: transcription,
+      //   Verdict: verdict,
+      //   user : req.body.userEmail
+      // }, 
+      // { merge: true })
+      
+
+      // const docRef = await addDoc(collection(db, "responses"), {
+      //   Transcription: transcription,
+      //   Verdict: verdict,
+      //   user : req.body.userEmail
+      // })
     } else {
       console.log("No number found in the string");
     }
-    
 
     res.json({
       transcriptionAssemblyAI: transcription,
       verdict: verdict,
       // transcriptionGoogle: transcriptionGoogle,
       // transcriptionHuggingface: transcriptionHuggingface,
-      userEmail: req.body.userEmail
+      userEmail: req.body.userEmail,
+      message: message
       // rawTrans: data
     })
   } catch(err) {

@@ -22,6 +22,7 @@
     "multer": "^1.4.5-lts.1",
     "nodemon": "^3.0.1",
     "openai": "^4.17.5",
+    "twilio": "^4.20.1",
     "webm-to-wav-converter": "^1.1.0"
   }
 }
