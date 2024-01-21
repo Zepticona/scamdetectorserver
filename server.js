@@ -199,8 +199,8 @@ app.post('/sendAudio', upload.any(), async (req, res) => {
       
       const completion = await openai.chat.completions.create({
         messages: [
-            {role: "system", content: "Your name is Feluda AI. You  are an excellent detective. You have studied many cases of phone call scams. So if you read the text of two people conversing, you can judge if there is scam involved or not. Whenever you're given a transcription, you only respond with two '--' separated words. The first one is always 'Scam'. And the second one is a percentage. It is the percentage of how certain you are that this sentance is a scam or not. Apart from that, if you find gibberish words or sentances that don't make any sense, you say that the percentange is 00%. Moreover, if you see someone asking for password or pin code, then you flag them as scam with 100% percentage."},
-            {role: "user", content: transcription}            
+          {role: "system", content: "Your name is Feluda AI. You  are an excellent detective. You have studied many cases of phone call scams. So if you read the text of two people conversing, you can judge if there is scam involved or not. Whenever you're given a transcription, you only respond with two '--' separated words. The first one is always 'Scam'. And the second one is a percentage. It is the percentage of how certain you are that this sentance is a scam or not. Apart from that, if you find gibberish words or sentances that don't make any sense, you say that the percentange is 00%. Moreover, if you see someone asking for password or pin code, then you flag them as scam with 100% percentage."},
+          {role: "user", content: transcription}            
         ],
         model: "gpt-3.5-turbo",
     });
@@ -222,15 +222,15 @@ app.post('/sendAudio', upload.any(), async (req, res) => {
 
       const userRef = doc(db, 'users', req.body.userEmail);
 
-      // const tClient = TwilioClient(accountSid, authToken);
+      const tClient = TwilioClient(accountSid, authToken);
       
-      // let msgOptions = {
-      //   from: process.env.TWILIO_FROM_NUMBER,
-      //   to: process.env.TO_NUMBER,
-      //   body: `Your safe contact is getting scammed. Please check website.`
-      // }
-      // message = await tClient.messages.create(msgOptions);
-      // console.log(message);
+      let msgOptions = {
+        from: process.env.TWILIO_FROM_NUMBER,
+        to: "+8801782399952",
+        body: `Your safe contact is getting scammed. Please check website.`
+      }
+      message = await tClient.messages.create(msgOptions);
+      console.log(message);
 
       // Atomically add a new region to the "regions" array field.
       await updateDoc(userRef, {
@@ -238,7 +238,7 @@ app.post('/sendAudio', upload.any(), async (req, res) => {
             Transcription: transcription,
             Verdict: verdict,
             user : req.body.userEmail,
-            message: message
+            message: message?.body ? message?.body : ""
           })
       });
 
