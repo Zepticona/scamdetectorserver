@@ -290,8 +290,7 @@ app.post('/sendAudio', upload.any(), async (req, res) => {
       // transcriptionHuggingface: transcriptionHuggingface,
       userEmail: req.body.userEmail,
       message: message,
-      scammerNumber: req.body.scammerNumber,
-      time: currentDate
+      scammerNumber: req.body.scammerNumber
       // rawTrans: data
     })
   } catch(err) {
