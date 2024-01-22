@@ -222,17 +222,18 @@ app.post('/sendAudio', upload.any(), async (req, res) => {
 
       const userRef = doc(db, 'users', req.body.userEmail);
 
-      // const tClient = TwilioClient(accountSid, authToken);
+      const tClient = TwilioClient(accountSid, authToken);
       
-      // let msgOptions = {
-      //   from: process.env.TWILIO_FROM_NUMBER,
-      //   to: "+8801782399952",
-      //   body: `Your safe contact is getting scammed. Please check website.`
-      // }
-      // message = await tClient.messages.create(msgOptions);
+      let msgOptions = {
+        from: process.env.TWILIO_FROM_NUMBER,
+        to: "+8801782399952",
+        body: `Your safe contact is getting scammed. Please check website.`
+      }
+      message = await tClient.messages.create(msgOptions);
       console.log(message);
-      const currentDate = new Date();
 
+      const currentDate = new Date();
+      
       const options = {
         hour: 'numeric',
         minute: 'numeric',
